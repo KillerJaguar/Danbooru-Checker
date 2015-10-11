@@ -129,6 +129,7 @@
             this.MinimumSize = new System.Drawing.Size(350, 350);
             this.Name = "DanbooruCheckerForm";
             this.Text = "Danbooru Checker";
+            this.Load += new System.EventHandler(this.DanbooruCheckerForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataImage)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

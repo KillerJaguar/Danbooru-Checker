@@ -22,17 +22,12 @@ namespace Danbooru_Checker
                 string path = dialogFolderBrowser.SelectedPath;
                 labelDirectory.Text = path;
 
-                // Create the list of images 
-                images = new List<Image>();
-
-                // Iterate through each file, adding onto the image list
-                DirectoryInfo dirInfo = new DirectoryInfo(path);
-                foreach (FileInfo fileInfo in dirInfo.EnumerateFiles())
-                    images.Add(new Image(fileInfo.FullName));
-
                 // Save the path
                 Properties.Settings.Default["LastDir"] = path;
                 Properties.Settings.Default.Save();
+
+                // Open the directory
+                OpenDirectory(path);
 
                 // Update the displayed data
                 UpdateData();
@@ -53,7 +48,7 @@ namespace Danbooru_Checker
                     foreach (Image image in images)
                         image.Validate();
                 }
-                catch (System.Net.WebException e)
+                catch (System.Net.WebException)
                 {
                     // 421 User Throttled: User is throttled, try again later
                 }
@@ -62,6 +57,28 @@ namespace Danbooru_Checker
                     UpdateData();
                 }
             }
+        }
+
+        private void DanbooruCheckerForm_Load(object sender, EventArgs e)
+        {
+            string path = (string) Properties.Settings.Default["LastDir"];
+            if (path != null && path.Length > 0)
+            {
+                labelDirectory.Text = path;
+                OpenDirectory(path);
+                UpdateData();
+            }
+        }
+
+        private void OpenDirectory(string path)
+        {
+            // Create the list of images 
+            images = new List<Image>();
+
+            // Iterate through each file, adding onto the image list
+            DirectoryInfo dirInfo = new DirectoryInfo(path);
+            foreach (FileInfo fileInfo in dirInfo.EnumerateFiles())
+                images.Add(new Image(fileInfo.FullName));
         }
 
         private void UpdateData()
