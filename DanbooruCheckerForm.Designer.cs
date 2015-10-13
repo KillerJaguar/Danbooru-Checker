@@ -102,6 +102,7 @@
             this.dataImage.RowHeadersVisible = false;
             this.dataImage.Size = new System.Drawing.Size(410, 333);
             this.dataImage.TabIndex = 6;
+            this.dataImage.CellContentDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataImage_CellContentDoubleClick);
             // 
             // File
             // 

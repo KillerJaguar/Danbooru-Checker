@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 
@@ -55,6 +56,28 @@ namespace Danbooru_Checker
                 finally
                 {
                     UpdateData();
+                }
+            }
+        }
+
+        private void dataImage_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            Image image = images[e.RowIndex];
+
+            // Show file in explorer
+            if (e.ColumnIndex == 0)
+            {
+                Process.Start("explorer.exe", string.Format("/select,\"{0}\"", image.FilePath));
+            }
+
+            // Open URL (if exists)
+            else if (e.ColumnIndex == 1)
+            {
+                Uri url = image.URL;
+                if (url != null)
+                {
+                    ProcessStartInfo startInfo = new ProcessStartInfo(url.ToString());
+                    Process.Start(startInfo);
                 }
             }
         }
