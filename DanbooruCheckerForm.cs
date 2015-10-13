@@ -67,7 +67,7 @@ namespace Danbooru_Checker
             // Show file in explorer
             if (e.ColumnIndex == 0)
             {
-                Process.Start("explorer.exe", string.Format("/select,\"{0}\"", image.FilePath));
+                Process.Start("explorer.exe", string.Format("/select,\"{0}\"", image.Filepath));
             }
 
             // Open URL (if exists)
@@ -108,7 +108,7 @@ namespace Danbooru_Checker
         {
             dataImage.Rows.Clear();
             foreach (Image image in images)
-                dataImage.Rows.Add(image.FilePath, image.URL);
+                dataImage.Rows.Add(image.Filename, image.URL);
         }
 
         private ApiKeyDialog dialogApiKey;

@@ -14,7 +14,8 @@ namespace Danbooru_Checker
             this.filepath = filepath;
         }
 
-        public string FilePath { get { return filepath; } }
+        public string Filename { get { return System.IO.Path.GetFileName(filepath); } }
+        public string Filepath { get { return System.IO.Path.GetFullPath(filepath); } }
         public bool HasChecked { get { return hasChecked; } }
         public bool HasFound { get { return hasChecked && id != -1; } }
 
@@ -33,7 +34,7 @@ namespace Danbooru_Checker
                 return;
 
             // Read the file as bytes
-            byte[] fileBytes = File.ReadAllBytes(filepath);
+            byte[] fileBytes = File.ReadAllBytes(Filepath);
 
             // Hash the bytes into MD5
             MD5 hash = MD5.Create();
