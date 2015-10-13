@@ -100,6 +100,8 @@
             this.dataImage.Name = "dataImage";
             this.dataImage.ReadOnly = true;
             this.dataImage.RowHeadersVisible = false;
+            this.dataImage.RowTemplate.ReadOnly = true;
+            this.dataImage.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.dataImage.Size = new System.Drawing.Size(410, 333);
             this.dataImage.TabIndex = 6;
             this.dataImage.CellContentDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataImage_CellContentDoubleClick);
