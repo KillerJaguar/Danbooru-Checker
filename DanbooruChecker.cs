@@ -28,22 +28,30 @@ namespace Danbooru_Checker
             }
         }
 
+        public string Hash
+        {
+            get
+            {
+                // Read the file as bytes
+                byte[] fileBytes = File.ReadAllBytes(FilePath);
+
+                // Hash the bytes into MD5
+                MD5 hash = MD5.Create();
+                hash.ComputeHash(fileBytes);
+
+                // Convert the MD5 into a string
+                return BitConverter.ToString(hash.Hash).Replace("-", String.Empty);
+            }
+        }
+
         public void Validate()
         {
             // Do not validate again if already checked
             if (hasChecked)
                 return;
 
-            // Read the file as bytes
-            byte[] fileBytes = File.ReadAllBytes(FilePath);
-
-            // Hash the bytes into MD5
-            MD5 hash = MD5.Create();
-            hash.ComputeHash(fileBytes);
-            string hashStr = BitConverter.ToString(hash.Hash).Replace("-", String.Empty);
-
             // Create the WebRequest to GET the XML data
-            string url = "https://danbooru.donmai.us/posts.xml?tags=md5%3A" + hashStr;
+            string url = "https://danbooru.donmai.us/posts.xml?tags=md5%3A" + Hash;
             HttpWebRequest request = WebRequest.CreateHttp(url);
             request.ContentType = "text/xml";
             request.Credentials = new NetworkCredential(
@@ -53,17 +61,18 @@ namespace Danbooru_Checker
             request.Proxy = null;
 
             // Get the response, blocking call
-            HttpWebResponse response = (HttpWebResponse) request.GetResponse();
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                // Create the responding XML document
+                XmlDocument doc = new XmlDocument();
+                doc.Load(response.GetResponseStream());
 
-            // Create the responding XML document
-            XmlDocument doc = new XmlDocument();
-            doc.Load(response.GetResponseStream());
+                XmlElement posts = doc["posts"];
 
-            XmlElement posts = doc["posts"];
-
-            // Get the ID (if an MD5 match was found)
-            if (posts.HasChildNodes)
-                id = int.Parse(posts["post"]["id"].InnerText);
+                // Get the ID (if an MD5 match was found)
+                if (posts.HasChildNodes)
+                    id = int.Parse(posts["post"]["id"].InnerText);
+            }
 
             // Set the Image checked, so it does not check again
             hasChecked = true;
