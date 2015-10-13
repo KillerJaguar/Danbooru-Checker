@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
 
 namespace Danbooru_Checker
@@ -32,6 +34,8 @@ namespace Danbooru_Checker
 
                 // Update the displayed data
                 UpdateData();
+
+                SaveData();
             }
         }
 
@@ -55,6 +59,7 @@ namespace Danbooru_Checker
                 }
                 finally
                 {
+                    SaveData();
                     UpdateData();
                 }
             }
@@ -88,7 +93,8 @@ namespace Danbooru_Checker
             if (path != null && path.Length > 0)
             {
                 labelDirectory.Text = path;
-                OpenDirectory(path);
+                if (!LoadData())
+                    OpenDirectory(path);
                 UpdateData();
             }
         }
@@ -111,7 +117,42 @@ namespace Danbooru_Checker
                 dataImage.Rows.Add(image.FileName, image.URL);
         }
 
+        private void SaveData()
+        {
+            Directory.CreateDirectory(SaveDirectoryPath);
+
+            IFormatter formatter = new BinaryFormatter();
+            using (Stream stream = new FileStream(SaveFilePath, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                formatter.Serialize(stream, images);
+            }
+        }
+
+        private bool LoadData()
+        {
+            try
+            {
+                IFormatter formatter = new BinaryFormatter();
+                using (Stream stream = new FileStream(SaveFilePath, FileMode.Open, FileAccess.Read))
+                    images = (List<Image>)formatter.Deserialize(stream);
+                return true;
+            }
+            catch (DirectoryNotFoundException)
+            { }
+            catch (FileNotFoundException)
+            { }
+
+            return false;
+        }
+
         private ApiKeyDialog dialogApiKey;
         private List<Image> images;
+
+        private static readonly string SaveDirectoryPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Danbooru Checker");
+
+        private static readonly string SaveFilePath = Path.Combine(
+            SaveDirectoryPath, "images.bin");
     }
 }

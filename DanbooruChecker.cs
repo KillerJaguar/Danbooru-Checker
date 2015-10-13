@@ -7,6 +7,7 @@ using System.Xml;
 
 namespace Danbooru_Checker
 {
+    [Serializable]
     public class Image
     {
         public Image(string filepath)
