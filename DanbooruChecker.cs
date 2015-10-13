@@ -4,6 +4,7 @@ using System.Net;
 using System.IO;
 using System.Security.Cryptography;
 using System.Xml;
+using System.Collections.Generic;
 
 namespace Danbooru_Checker
 {
@@ -83,16 +84,99 @@ namespace Danbooru_Checker
         private int id = -1;
     }
 
-    public class DanbooruChecker
+    public sealed class DanbooruChecker
     {
+        public static DanbooruChecker Instance
+        {
+            get { return instance.Value; }
+        }
 
+        public string Directory
+        {
+            get { return Properties.Settings.Default.LastDir; }
+            set { OpenDirectory(value); }
+        }
+
+        public string ApiKey
+        {
+            get { return Properties.Settings.Default.ApiKey; }
+            set { Properties.Settings.Default.ApiKey = value; }
+        }
+
+        public string Login
+        {
+            get { return Properties.Settings.Default.Login; }
+            set { Properties.Settings.Default.Login = value; }
+        }
+
+        public void Save()
+        {
+
+        }
+
+        public void Load()
+        {
+
+        }
+
+        public List<Image> OpenDirectory(string path, SearchOption option = SearchOption.TopDirectoryOnly)
+        {
+            List<Image> images = new List<Image>();
+
+            DirectoryInfo dirInfo = new DirectoryInfo(path);
+            foreach (FileInfo fileInfo in dirInfo.EnumerateFiles("*", option))
+            {
+                string filename = fileInfo.Name;
+                string filepath = fileInfo.FullName;
+
+                bool canAdd = true;
+                foreach (string extension in ValidExtensions)
+                    canAdd = canAdd && filename.EndsWith(extension);
+
+                if (canAdd)
+                {
+                    bool inCache = cache.ContainsKey(filepath);
+                    images.Add(inCache ? cache[filepath] : new Image(filepath));
+                }
+            }
+
+            Properties.Settings.Default.LastDir = path;
+
+            return images;
+        }
+
+        private DanbooruChecker()
+        {
+            OpenDirectory(Directory);
+        }
+
+        private static readonly Lazy<DanbooruChecker> instance =
+            new Lazy<DanbooruChecker>();
+
+        private static readonly string SaveDirectoryPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Danbooru Checker");
+
+        private static readonly string SaveFilePath = Path.Combine(
+            SaveDirectoryPath, "images.bin");
+
+        /// <summary>
+        /// List of valid extensions to check on Danbooru.
+        /// Only includes common image file extensions.
+        /// </summary>
+        private static readonly string[] ValidExtensions = 
+            { ".png", ".jpg", ".jpeg", ".gif" };
+
+        /// <summary>
+        /// A dictionary of images already searched. Only images with a result
+        /// are cached to disk.
+        /// </summary>
+        private readonly Dictionary<string, Image> cache =
+            new Dictionary<string, Image>();
     }
 
     static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
