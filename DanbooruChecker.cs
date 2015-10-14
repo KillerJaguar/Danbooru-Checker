@@ -141,9 +141,9 @@ namespace Danbooru_Checker
                     string filename = fileInfo.Name;
                     string filepath = fileInfo.FullName;
 
-                    bool canAdd = true;
+                    bool canAdd = false;
                     foreach (string extension in ValidExtensions)
-                        canAdd = canAdd && filename.EndsWith(extension);
+                        canAdd = canAdd || fileInfo.Extension == extension;
 
                     if (canAdd)
                     {
