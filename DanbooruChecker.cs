@@ -5,6 +5,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Xml;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Danbooru_Checker
 {
@@ -109,14 +111,19 @@ namespace Danbooru_Checker
             set { Properties.Settings.Default.Login = value; }
         }
 
-        public void Save()
+        public void Save(List<Image> images)
         {
+            Properties.Settings.Default.Save();
 
-        }
+            foreach (Image image in images)
+                if (image.URL != null && !cache.ContainsKey(image.FilePath))
+                    cache[image.FilePath] = image;
 
-        public void Load()
-        {
+            System.IO.Directory.CreateDirectory(SaveDirectoryPath);
 
+            IFormatter formatter = new BinaryFormatter();
+            using (Stream stream = new FileStream(SaveFilePath, FileMode.OpenOrCreate, FileAccess.Write))
+                formatter.Serialize(stream, cache);
         }
 
         public List<Image> OpenDirectory(string path, SearchOption option = SearchOption.TopDirectoryOnly)
@@ -145,9 +152,45 @@ namespace Danbooru_Checker
             return images;
         }
 
+        public int CheckDanbooru(string hash)
+        {
+            // Create the WebRequest to GET the XML data
+            string url = "https://danbooru.donmai.us/posts.xml?tags=md5%3A" + hash;
+            HttpWebRequest request = WebRequest.CreateHttp(url);
+            request.ContentType = "text/xml";
+            request.Credentials = new NetworkCredential(Login, ApiKey);
+            request.Method = "GET";
+            request.Proxy = null;
+
+            // Get the response, blocking call
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                // Create the responding XML document
+                XmlDocument doc = new XmlDocument();
+                doc.Load(response.GetResponseStream());
+
+                XmlElement posts = doc["posts"];
+
+                // Get the ID (if an MD5 match was found)
+                if (posts.HasChildNodes)
+                    return int.Parse(posts["post"]["id"].InnerText);
+            }
+
+            return -1;
+        }
+
         private DanbooruChecker()
         {
-            OpenDirectory(Directory);
+            try
+            {
+                IFormatter formatter = new BinaryFormatter();
+                using (Stream stream = new FileStream(SaveFilePath, FileMode.Open, FileAccess.Read))
+                    cache = (Dictionary<string, Image>)formatter.Deserialize(stream);
+            }
+            catch (DirectoryNotFoundException)
+            { }
+            catch (FileNotFoundException)
+            { }
         }
 
         private static readonly Lazy<DanbooruChecker> instance =
@@ -158,7 +201,7 @@ namespace Danbooru_Checker
             "Danbooru Checker");
 
         private static readonly string SaveFilePath = Path.Combine(
-            SaveDirectoryPath, "images.bin");
+            SaveDirectoryPath, "data.bin");
 
         /// <summary>
         /// List of valid extensions to check on Danbooru.
@@ -171,7 +214,7 @@ namespace Danbooru_Checker
         /// A dictionary of images already searched. Only images with a result
         /// are cached to disk.
         /// </summary>
-        private readonly Dictionary<string, Image> cache =
+        private Dictionary<string, Image> cache =
             new Dictionary<string, Image>();
     }
 
