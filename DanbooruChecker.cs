@@ -118,7 +118,7 @@ namespace Danbooru_Checker
                     cache[image.FilePath] = image;
         }
 
-        public void Save(List<Image> images)
+        public void Save()
         {
             Properties.Settings.Default.Save();
 
@@ -133,24 +133,27 @@ namespace Danbooru_Checker
         {
             List<Image> images = new List<Image>();
 
-            DirectoryInfo dirInfo = new DirectoryInfo(path);
-            foreach (FileInfo fileInfo in dirInfo.EnumerateFiles("*", option))
+            if (System.IO.Directory.Exists(path))
             {
-                string filename = fileInfo.Name;
-                string filepath = fileInfo.FullName;
-
-                bool canAdd = true;
-                foreach (string extension in ValidExtensions)
-                    canAdd = canAdd && filename.EndsWith(extension);
-
-                if (canAdd)
+                DirectoryInfo dirInfo = new DirectoryInfo(path);
+                foreach (FileInfo fileInfo in dirInfo.EnumerateFiles("*", option))
                 {
-                    bool inCache = cache.ContainsKey(filepath);
-                    images.Add(inCache ? cache[filepath] : new Image(filepath));
-                }
-            }
+                    string filename = fileInfo.Name;
+                    string filepath = fileInfo.FullName;
 
-            Properties.Settings.Default.LastDir = path;
+                    bool canAdd = true;
+                    foreach (string extension in ValidExtensions)
+                        canAdd = canAdd && filename.EndsWith(extension);
+
+                    if (canAdd)
+                    {
+                        bool inCache = cache.ContainsKey(filepath);
+                        images.Add(inCache ? cache[filepath] : new Image(filepath));
+                    }
+                }
+
+                Properties.Settings.Default.LastDir = path;
+            }
 
             return images;
         }
@@ -197,7 +200,7 @@ namespace Danbooru_Checker
         }
 
         private static readonly Lazy<DanbooruChecker> instance =
-            new Lazy<DanbooruChecker>();
+            new Lazy<DanbooruChecker>(() => new DanbooruChecker());
 
         private static readonly string SaveDirectoryPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

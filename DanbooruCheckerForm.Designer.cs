@@ -58,7 +58,7 @@
             this.labelDirectory.AutoSize = true;
             this.labelDirectory.Location = new System.Drawing.Point(93, 17);
             this.labelDirectory.Name = "labelDirectory";
-            this.labelDirectory.Size = new System.Drawing.Size(0, 13);
+            this.labelDirectory.Size = new System.Drawing.Size(0, 17);
             this.labelDirectory.TabIndex = 3;
             // 
             // buttonCheck
@@ -132,7 +132,6 @@
             this.MinimumSize = new System.Drawing.Size(350, 350);
             this.Name = "DanbooruCheckerForm";
             this.Text = "Danbooru Checker";
-            this.Load += new System.EventHandler(this.DanbooruCheckerForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataImage)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

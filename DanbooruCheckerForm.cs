@@ -14,6 +14,13 @@ namespace Danbooru_Checker
         {
             InitializeComponent();
             dialogApiKey = new ApiKeyDialog();
+
+            DanbooruChecker dan = DanbooruChecker.Instance;
+            active = dan.OpenDirectory(dan.Directory);
+
+            labelDirectory.Text = dan.Directory;
+
+            UpdateData(active);
         }
 
         private void buttonOpen_Click(object sender, EventArgs e)
@@ -21,21 +28,19 @@ namespace Danbooru_Checker
             DialogResult result = dialogFolderBrowser.ShowDialog(this);
             if (result == DialogResult.OK)
             {
+                DanbooruChecker dan = DanbooruChecker.Instance;
+
                 // Get the path to the selected directory
                 string path = dialogFolderBrowser.SelectedPath;
                 labelDirectory.Text = path;
 
-                // Save the path
-                Properties.Settings.Default["LastDir"] = path;
-                Properties.Settings.Default.Save();
-
                 // Open the directory
-                OpenDirectory(path);
+                active = dan.OpenDirectory(path);
 
                 // Update the displayed data
-                UpdateData();
+                UpdateData(active);
 
-                SaveData();
+                dan.Save();
             }
         }
 
@@ -46,28 +51,33 @@ namespace Danbooru_Checker
 
         private void buttonCheck_Click(object sender, EventArgs e)
         {
-            if (images != null)
+            if (active != null)
             {
                 try
                 {
-                    foreach (Image image in images)
+                    // TODO use tasks to speed up process
+                    foreach (Image image in active)
                         image.Validate();
                 }
                 catch (System.Net.WebException)
                 {
                     // 421 User Throttled: User is throttled, try again later
+                    // TODO handle error
                 }
                 finally
                 {
-                    SaveData();
-                    UpdateData();
+                    DanbooruChecker dan = DanbooruChecker.Instance;
+                    dan.Cache(active);
+                    dan.Save();
+
+                    UpdateData(active);
                 }
             }
         }
 
         private void dataImage_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            Image image = images[e.RowIndex];
+            Image image = active[e.RowIndex];
 
             // Show file in explorer
             if (e.ColumnIndex == 0)
@@ -87,72 +97,14 @@ namespace Danbooru_Checker
             }
         }
 
-        private void DanbooruCheckerForm_Load(object sender, EventArgs e)
-        {
-            string path = (string) Properties.Settings.Default["LastDir"];
-            if (path != null && path.Length > 0)
-            {
-                labelDirectory.Text = path;
-                if (!LoadData())
-                    OpenDirectory(path);
-                UpdateData();
-            }
-        }
-
-        private void OpenDirectory(string path)
-        {
-            // Create the list of images 
-            images = new List<Image>();
-
-            // Iterate through each file, adding onto the image list
-            DirectoryInfo dirInfo = new DirectoryInfo(path);
-            foreach (FileInfo fileInfo in dirInfo.EnumerateFiles())
-                images.Add(new Image(fileInfo.FullName));
-        }
-
-        private void UpdateData()
+        private void UpdateData(List<Image> images)
         {
             dataImage.Rows.Clear();
             foreach (Image image in images)
                 dataImage.Rows.Add(image.FileName, image.URL);
         }
 
-        private void SaveData()
-        {
-            Directory.CreateDirectory(SaveDirectoryPath);
-
-            IFormatter formatter = new BinaryFormatter();
-            using (Stream stream = new FileStream(SaveFilePath, FileMode.OpenOrCreate, FileAccess.Write))
-            {
-                formatter.Serialize(stream, images);
-            }
-        }
-
-        private bool LoadData()
-        {
-            try
-            {
-                IFormatter formatter = new BinaryFormatter();
-                using (Stream stream = new FileStream(SaveFilePath, FileMode.Open, FileAccess.Read))
-                    images = (List<Image>)formatter.Deserialize(stream);
-                return true;
-            }
-            catch (DirectoryNotFoundException)
-            { }
-            catch (FileNotFoundException)
-            { }
-
-            return false;
-        }
-
         private ApiKeyDialog dialogApiKey;
-        private List<Image> images;
-
-        private static readonly string SaveDirectoryPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Danbooru Checker");
-
-        private static readonly string SaveFilePath = Path.Combine(
-            SaveDirectoryPath, "images.bin");
+        private List<Image> active;
     }
 }
