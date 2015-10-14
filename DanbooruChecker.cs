@@ -111,13 +111,16 @@ namespace Danbooru_Checker
             set { Properties.Settings.Default.Login = value; }
         }
 
-        public void Save(List<Image> images)
+        public void Cache(List<Image> images)
         {
-            Properties.Settings.Default.Save();
-
             foreach (Image image in images)
                 if (image.URL != null && !cache.ContainsKey(image.FilePath))
                     cache[image.FilePath] = image;
+        }
+
+        public void Save(List<Image> images)
+        {
+            Properties.Settings.Default.Save();
 
             System.IO.Directory.CreateDirectory(SaveDirectoryPath);
 
