@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Danbooru_Checker
@@ -13,66 +11,65 @@ namespace Danbooru_Checker
         public DanbooruCheckerForm()
         {
             InitializeComponent();
-            dialogApiKey = new ApiKeyDialog();
-
-            DanbooruChecker dan = DanbooruChecker.Instance;
-            active = dan.OpenDirectory(dan.Directory);
-
-            labelDirectory.Text = dan.Directory;
-
-            UpdateData(active);
+            OpenDirectory(DanbooruChecker.Instance.Directory);
         }
 
         private void buttonOpen_Click(object sender, EventArgs e)
         {
+            if (checking)
+                return;
+
             DialogResult result = dialogFolderBrowser.ShowDialog(this);
             if (result == DialogResult.OK)
             {
-                DanbooruChecker dan = DanbooruChecker.Instance;
-
-                // Get the path to the selected directory
-                string path = dialogFolderBrowser.SelectedPath;
-                labelDirectory.Text = path;
-
-                // Open the directory
-                active = dan.OpenDirectory(path);
-
-                // Update the displayed data
-                UpdateData(active);
-
-                dan.Save();
+                OpenDirectory(dialogFolderBrowser.SelectedPath);
+                DanbooruChecker.Instance.Save();
             }
         }
 
         private void buttonAuthenticate_Click(object sender, EventArgs e)
         {
-            dialogApiKey.ShowDialog();
+            if (!checking)
+                dialogApiKey.ShowDialog();
         }
 
         private void buttonCheck_Click(object sender, EventArgs e)
         {
-            if (active != null)
+            // Already checking, do nothing
+            if (checking)
+                return;
+
+            // All files checked, do nothing
+            if (active.TrueForAll(i => i.HasChecked))
             {
-                try
+                Output("All files checked");
+                return;
+            }
+
+            checking = true;
+
+            List<Image> check = active.FindAll(i => !i.HasChecked);
+
+            Task.Run(() =>
+            {
+                check.ForEach(i =>
                 {
-                    // TODO use tasks to speed up process
-                    foreach (Image image in active)
-                        image.Validate();
-                }
-                catch (System.Net.WebException)
-                {
-                    // 421 User Throttled: User is throttled, try again later
-                    // TODO handle error
-                }
-                finally
+                    Output("Checking " + i.FileName);
+                    i.Validate();
+                });
+
+                Invoke((MethodInvoker)delegate() 
                 {
                     DanbooruChecker dan = DanbooruChecker.Instance;
                     dan.Cache(active);
                     dan.Save();
 
                     UpdateData(active);
-                }
-            }
+                    Output("Finished");
+
+                    checking = false;
+                });
+            });
         }
 
         private void dataImage_CellContentDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -100,11 +97,33 @@ namespace Danbooru_Checker
         private void UpdateData(List<Image> images)
         {
             dataImage.Rows.Clear();
-            foreach (Image image in images)
-                dataImage.Rows.Add(image.FileName, image.URL);
+            images.ForEach(i => dataImage.Rows.Add(i.FileName, i.URL));
         }
 
-        private ApiKeyDialog dialogApiKey;
+        private void UpdateData(Image image)
+        {
+            // TODO update a single data
+        }
+
+        private void OpenDirectory(string path)
+        {
+            active = DanbooruChecker.Instance.OpenDirectory(path);
+            labelDirectory.Text = path;
+
+            UpdateData(active);
+
+            if (path.Length > 0)
+                Output("Opened directory: " + path);
+        }
+
+        private void Output(string text)
+        {
+            labelOutput.Text = text;
+        }
+
+        private bool checking = false;
+
+        private ApiKeyDialog dialogApiKey = new ApiKeyDialog();
         private List<Image> active;
     }
 }
