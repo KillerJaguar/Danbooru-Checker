@@ -204,7 +204,7 @@ namespace Danbooru_Checker
 
         private static readonly string SaveDirectoryPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Danbooru Checker");
+            "Danbooru_Checker");
 
         private static readonly string SaveFilePath = Path.Combine(
             SaveDirectoryPath, "data.bin");

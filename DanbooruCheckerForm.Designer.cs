@@ -134,8 +134,7 @@
             // labelOutput
             // 
             this.labelOutput.Name = "labelOutput";
-            this.labelOutput.Size = new System.Drawing.Size(28, 17);
-            this.labelOutput.Text = "Test";
+            this.labelOutput.Size = new System.Drawing.Size(0, 17);
             // 
             // DanbooruCheckerForm
             // 
@@ -149,6 +148,7 @@
             this.Controls.Add(this.buttonOpen);
             this.MinimumSize = new System.Drawing.Size(350, 350);
             this.Name = "DanbooruCheckerForm";
+            this.ShowIcon = false;
             this.Text = "Danbooru Checker";
             ((System.ComponentModel.ISupportInitialize)(this.dataImage)).EndInit();
             this.statusStrip1.ResumeLayout(false);
