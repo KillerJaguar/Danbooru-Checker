@@ -147,8 +147,6 @@
             this.Controls.Add(this.buttonCheck);
             this.Controls.Add(this.labelDirectory);
             this.Controls.Add(this.buttonOpen);
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(350, 350);
             this.Name = "DanbooruCheckerForm";
             this.Text = "Danbooru Checker";
