@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -52,11 +53,23 @@ namespace Danbooru_Checker
 
             Task.Run(() =>
             {
-                check.ForEach(i =>
+                bool checkedAll = true;
+
+                try
                 {
-                    Output("Checking " + i.FileName);
-                    i.Validate();
-                });
+                    check.ForEach(i =>
+                    {
+                        Output("Checking " + i.FileName);
+                        i.Validate();
+                    });
+                }
+                catch (WebException ex)
+                {
+                    // TODO handle error code 421 better
+
+                    checkedAll = false;
+                    Output(ex.Message);
+                }
 
                 Invoke((MethodInvoker)delegate() 
                 {
@@ -65,7 +78,9 @@ namespace Danbooru_Checker
                     dan.Save();
 
                     UpdateData(active);
-                    Output("Finished");
+
+                    if (checkedAll)
+                        Output("Finished");
 
                     checking = false;
                 });

@@ -58,8 +58,8 @@ namespace Danbooru_Checker
             HttpWebRequest request = WebRequest.CreateHttp(url);
             request.ContentType = "text/xml";
             request.Credentials = new NetworkCredential(
-                (string) Properties.Settings.Default["Login"],
-                (string) Properties.Settings.Default["ApiKey"]);
+                DanbooruChecker.Instance.Login,
+                DanbooruChecker.Instance.ApiKey);
             request.Method = "GET";
             request.Proxy = null;
 
